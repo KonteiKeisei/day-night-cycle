@@ -3,7 +3,7 @@ import {registerSettings} from './settings.js';
 'use strict';
 
 Hooks.once('init', async () => {
-    console.log('day-night-cycle | Initializing tension-pool');
+    console.log('day-night-cycle | Initializing day-night-cycle');
     registerSettings();
 });
 
@@ -43,7 +43,21 @@ Hooks.on("ready", () => {
 
 Hooks.on("renderSceneConfig", (sheet, html, data) => {
 
-    let DNCflags = sheet.object.data.flags["day-night-cycle"]
+    let sceneDoc = sheet.document || sheet.object;
+    if (!sceneDoc) return;
+    
+    // Wrap html in jQuery if needed for V13 ApplicationV2 compatibility
+    const $html = html instanceof jQuery ? html : $(html);
+    
+    // Check if we've already added our fields to prevent duplicates
+    // Check both the element itself and within it
+    if ($html.hasClass('dnc-injected') || $html.find('.day-night-cycle-settings').length > 0) {
+        console.log("Day Night Cycle: Fields already injected, skipping");
+        return;
+    }
+    $html.addClass('dnc-injected');
+    
+    let DNCflags = sceneDoc.flags["day-night-cycle"]
     let currentactiveflag;
     let activechecked;
     let defaultchecked;
@@ -54,7 +68,7 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     let MaxLight;
 
     if (DNCflags===undefined){
-        sheet.object.setFlag("day-night-cycle", "active", game.settings.get("day-night-cycle", "default-on"))
+        sceneDoc.setFlag("day-night-cycle", "active", game.settings.get("day-night-cycle", "default-on"))
         if (game.settings.get("day-night-cycle", "default-on")){
             activechecked = "checked";
         } else {
@@ -126,125 +140,144 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
 
 
 
-    html.find(`input[name="globalLightThreshold"]`).parent().parent().after(`\
-<div class="form-group">
-    <label>Day Night Cycle</label>
-    <div class="form-fields">
+    // Try to find a good location to insert the fields in V13's new structure
+    // We want to insert AFTER the lighting fieldset, not inside it
+    let lightingTab = $html.find('[data-tab="lighting"]');
+    let insertAfter = null;
+    
+    if (lightingTab.length > 0) {
+        // Find the last fieldset in the lighting tab and insert after it
+        insertAfter = lightingTab.find('fieldset').last();
+    }
+    
+    if (!insertAfter || insertAfter.length === 0) {
+        // Fallback: try to find darkness level lock
+        insertAfter = $html.find('input[name="environment.darknessLevelLock"]').closest('.form-group');
+    }
+    
+    if (!insertAfter || insertAfter.length === 0) {
+        // Another fallback
+        insertAfter = $html.find('input[name="environment.darknessLevel"]').closest('fieldset');
+    }
+
+    if (insertAfter.length > 0) {
+        insertAfter.after(`\
+<fieldset class="day-night-cycle-settings">
+    <legend>Day Night Cycle</legend>
+    <div class="form-group">
         <label class="checkbox">
             <input type="checkbox" id="DNC.active" name="DNC.active" ` + activechecked + `>
+            <span>Enable Day Night Cycle</span>
         </label>
+        <p class="hint">Turns on the Day Night Cycle for this scene.</p>
     </div>
-    <p class="notes">Turns on the Day Night Cycle for this scene.</p>
-</div>
 
-<div class="form-group">
-    <label>Use Default Day Night Cycle Settings</label>
-    <div class="form-fields">
+    <div class="form-group">
         <label class="checkbox">
             <input type="checkbox" id="DNC.default" name="DNC.default" ` + defaultchecked + `>
+            <span>Use Default Settings</span>
         </label>
+        <p class="hint">If ticked the following Day Night Cycle settings will be ignored.</p>
     </div>
-    <p class="notes">If ticked the following Day Night Cycle settings will be ignored.</p>
-</div>
 
-<div class="form-group">
-    <label>Day Length Metric</label>
-    <div class="form-fields">
-        <input type="number" name="DNC.sd" min="0.01" value="`+sd+`" step="0.01" data-dtype="Number">
+    <div class="form-group">
+        <label>Day Length Metric</label>
+        <div class="form-fields">
+            <input type="number" name="DNC.sd" min="0.01" value="`+sd+`" step="0.01" data-dtype="Number">
+        </div>
+        <p class="hint">Smaller numbers give longer nights.</p>
     </div>
-    <p class="notes">Turns on the Day Night Cycle for this scene.</p>
-</div>
-<div class="form-group">
-    <label>Lighting Step Size</label>
-    <div class="form-fields">
-        <input type="number" name="DNC.stepsize" min="0.001" value="`+stepsize+`" step="0.001" data-dtype="Number">
+
+    <div class="form-group">
+        <label>Lighting Step Size</label>
+        <div class="form-fields">
+            <input type="number" name="DNC.stepsize" min="0.001" value="`+stepsize+`" step="0.001" data-dtype="Number">
+        </div>
+        <p class="hint">Size of jumps when adjusting light levels - High number bigger jumps but less often.</p>
     </div>
-    <p class="notes">Size of jumps when adjusting light levels - High number bigger jumps but less often.</p>
-</div>
-<div class="form-group">
-    <label>Moons effect lighting</label>
-    <div class="form-fields">
+
+    <div class="form-group">
         <label class="checkbox">
             <input type="checkbox" id="DNC.moononflag" name="DNC.moononflag" ` + moononchecked + `>
+            <span>Moons effect lighting</span>
         </label>
+        <p class="hint">Turns on moon effects for this scene.</p>
     </div>
-    <p class="notes">Turns on moon effects for this scene.</p>
-</div>
 
-<div class="form-group">
-    <label>Moon Brightness at Full Moon</label>
-    <div class="form-fields">
-        <input type="number" name="DNC.moonstrength" min="0.01" max="1.00" value="`+moonstrength+`" step="0.01" data-dtype="Number">
+    <div class="form-group">
+        <label>Moon Brightness at Full Moon</label>
+        <div class="form-fields">
+            <input type="number" name="DNC.moonstrength" min="0.01" max="1.00" value="`+moonstrength+`" step="0.01" data-dtype="Number">
+        </div>
+        <p class="hint">The strength of light from each moon on a full moon at midnight.</p>
     </div>
-</div>
 
-<div class="form-group">
-    <label>Max Brightness for Scene</label>
-    <div class="form-fields">
-        <input type="number" name="DNC.MaxLight" min="0.01" max="1.00" value="`+MaxLight+`" step="0.01" data-dtype="Number">
+    <div class="form-group">
+        <label>Max Brightness for Scene</label>
+        <div class="form-fields">
+            <input type="number" name="DNC.MaxLight" min="0.01" max="1.00" value="`+MaxLight+`" step="0.01" data-dtype="Number">
+        </div>
+        <p class="hint">For worlds that do not reach full light.</p>
     </div>
-    <p class="notes">For worlds that do not reach full light.</p>
-</div>
+</fieldset>
 `);
+    } else {
+        console.warn("Day Night Cycle: Could not find suitable location to insert scene config fields");
+    }
 
 })
 
 
-Hooks.once("init", () => {
-    libWrapper.register("day-night-cycle", "SceneConfig.prototype._getSubmitData", function (wrapped, ...args) {
-        let event = this.form;
-        let configscene = this.object;
+Hooks.on("closeDocumentSheet", (sheet, html) => {
+    const configscene = sheet.document || sheet.object;
+    if (!(configscene instanceof Scene)) return;
+    
+    // Wrap html in jQuery if needed for V13 ApplicationV2 compatibility
+    const $html = html instanceof jQuery ? html : $(html);
+    const form = $html.find("form")[0];
+    if (!form) return;
 
-        const moonon = $(event)
-            .find('input[name="DNC.moononflag"]')
-            .prop("checked");
-        configscene.setFlag("day-night-cycle", "moonon", moonon)
+    const moonon = $(form)
+        .find('input[name="DNC.moononflag"]')
+        .prop("checked");
+    if (moonon !== undefined) configscene.setFlag("day-night-cycle", "moonon", moonon);
 
-        const active = $(event)
-            .find('input[name="DNC.active"]')
-            .prop("checked");
-        configscene.setFlag("day-night-cycle", "active", active)
+    const active = $(form)
+        .find('input[name="DNC.active"]')
+        .prop("checked");
+    if (active !== undefined) configscene.setFlag("day-night-cycle", "active", active);
 
-        const defaultval = $(event)
-            .find('input[name="DNC.default"]')
-            .prop("checked");
-        configscene.setFlag("day-night-cycle", "default", defaultval)
+    const defaultval = $(form)
+        .find('input[name="DNC.default"]')
+        .prop("checked");
+    if (defaultval !== undefined) configscene.setFlag("day-night-cycle", "default", defaultval);
 
-        const sd = $(event)
-            .find('input[name="DNC.sd"]')
-            .val();
-        configscene.setFlag("day-night-cycle", "sd", sd)
+    const sd = $(form)
+        .find('input[name="DNC.sd"]')
+        .val();
+    if (sd) configscene.setFlag("day-night-cycle", "sd", sd);
 
-        const stepsize = $(event)
-            .find('input[name="DNC.stepsize"]')
-            .val();
-        configscene.setFlag("day-night-cycle", "stepsize", stepsize)
+    const stepsize = $(form)
+        .find('input[name="DNC.stepsize"]')
+        .val();
+    if (stepsize) configscene.setFlag("day-night-cycle", "stepsize", stepsize);
 
-        const moonstrength = $(event)
-            .find('input[name="DNC.moonstrength"]')
-            .val();
-        configscene.setFlag("day-night-cycle", "moonstrength", moonstrength)
+    const moonstrength = $(form)
+        .find('input[name="DNC.moonstrength"]')
+        .val();
+    if (moonstrength) configscene.setFlag("day-night-cycle", "moonstrength", moonstrength);
 
-        const MaxLight = $(event)
-            .find('input[name="DNC.MaxLight"]')
-            .val();
-        configscene.setFlag("day-night-cycle", "MaxLight", MaxLight)
+    const MaxLight = $(form)
+        .find('input[name="DNC.MaxLight"]')
+        .val();
+    if (MaxLight) configscene.setFlag("day-night-cycle", "MaxLight", MaxLight);
 
-        DEBUG(active,defaultval,sd,stepsize)
-
-        return wrapped(...args);
-    }, 'WRAPPER');
-
-})
+    DEBUG(active, defaultval, sd, stepsize);
+});
 
 
 Hooks.once("canvasReady",async (canvas)=>{
-    let scenedataobj;
-    if (game.version>10){
-        scenedataobj = canvas.scene
-    } else {
-        scenedataobj = canvas.scene.data
-    }
+    let scenedataobj = canvas.scene
 
 
     let DNCflags = scenedataobj.flags["day-night-cycle"]
@@ -305,12 +338,7 @@ Hooks.once("canvasReady",async (canvas)=>{
 
 function updatelighting(sceneid,timestamp){
     let sceneobj = game.scenes.get(sceneid);
-    let scenedataobj;
-    if (game.version>10){
-        scenedataobj = sceneobj
-    } else {
-        scenedataobj = sceneobj.data
-    }
+    let scenedataobj = sceneobj
 
     DEBUG("DNC Active",scenedataobj.flags["day-night-cycle"].active)
     if (!scenedataobj.flags["day-night-cycle"].active){return;}
@@ -330,7 +358,7 @@ function updatelighting(sceneid,timestamp){
     let minutesinhour = SimpleCalendar.api.getTimeConfiguration().minutesInHour;
 
     let lastS = 1 - scenedataobj.environment.darknessLevel;
-    let visioncutoff = 1 - scenedataobj.environment.globalLight.darkness.max;
+    let visioncutoff = 1 - (scenedataobj.environment.globalLight?.darkness?.max ?? 1);
 
     function score(sd, mean, X) {
         return (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * (((X - mean) / sd) ** 2))
@@ -414,7 +442,7 @@ function updatelighting(sceneid,timestamp){
     if (update) {
         DEBUG("Updated Scene Lighting ",true)
         Hooks.call("day-night-cycle-darknessupdated", [sceneid,dark]);
-        sceneobj.update({"darkness": dark}, {animateDarkness: 500});
+        sceneobj.update({"environment.darknessLevel": dark}, {animateDarkness: 500});
     } else {
         DEBUG("Updated Scene Lighting ",false)
     }
@@ -423,9 +451,10 @@ function updatelighting(sceneid,timestamp){
 Hooks.on('updateWorldTime', async (timestamp,stepsize) => {
     if (stepsize > 0 && game.user.isGM) {
         let currentlyviewedscenes = game.users.filter(x => x.viewedScene !== null).map(x => x.viewedScene);
-        currentlyviewedscenes.push(game.scenes.active.id)
+        if (game.scenes.active) {
+            currentlyviewedscenes.push(game.scenes.active.id)
+        }
         currentlyviewedscenes = [...new Set(currentlyviewedscenes)]
-        currentlyviewedscenes
 
         for (let i = 0; i < currentlyviewedscenes.length; i++) {
             DEBUG("Updating Lighting on Scene:", currentlyviewedscenes[i])

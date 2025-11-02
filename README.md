@@ -1,36 +1,38 @@
-# Day Night Cycle
+# Day Night Cycle - V13 Fork
 
-[![GitHub release](https://img.shields.io/github/release/sdoehren/day-night-cycle.svg)](https://GitHub.com/sdoehren/day-night-cycle/releases/)
-[![GitHub issues](https://img.shields.io/github/issues/sdoehren/day-night-cycle/bug.svg)](https://GitHub.com/sdoehren/day-night-cycle/issues/)
-
-
-[![Forge Install %](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Fday-night-cycle)](https://GitHub.com/sdoehren/day-night-cycle/releases/)
-[![Github all releases](https://img.shields.io/github/downloads/sdoehren/day-night-cycle/total.svg)](https://GitHub.com/sdoehren/day-night-cycle/releases/)
-[![Github Releases (by Release)](https://img.shields.io/github/downloads/sdoehren/day-night-cycle/latest/total.svg)](https://GitHub.com/sdoehren/day-night-cycle/releases/)
-
-[![ko-fi](https://img.shields.io/badge/ko--fi-Support%20Me-red?style=flat-square&logo=ko-fi)](https://ko-fi.com/sdoehren)
-
-[![The Forge](https://img.shields.io/badge/The%20Forge-Pay%20What%20You%20Want-success?style=flat-square)](https://eu.forge-vtt.com/bazaar#package=day-night-cycle)
+> **Note**: This is a community fork updated for Foundry VTT V13 compatibility.
+> 
+> Original module by [SDoehren](https://github.com/sdoehren/day-night-cycle)  
+> Fork maintained by [KonteiKeisei](https://github.com/KonteiKeisei/day-night-cycle)
 
 Day Night Cycle automatically changes the lighting levels to reflect the time of day based on the time in [Simple Calendar](https://github.com/vigoren/foundryvtt-simple-calendar).
 
 [Youtube Example](https://www.youtube.com/watch?v=3jIHKkcawq8)
 
-## Future of Day Night Cycle
+## V13 Compatibility
 
-Day Night Cycle has been updated to V12.
+This fork has been fully updated for Foundry VTT V13 (Build 13.341+):
 
-Going forwards Day Night Cycle should be treated as unsupported.
+- **ApplicationV2 Framework**: Updated Scene Config integration to use new ApplicationV2 patterns
+- **Scene API Modernization**: Migrated from deprecated `scene.darkness` to `scene.environment.darknessLevel`
+- **SceneConfig Namespace**: Updated to use `foundry.applications.sheets.SceneConfig`
+- **UI Consistency**: Settings now use V13 fieldset and hint formatting
+- **Hook System**: Replaced libWrapper approach with native `closeDocumentSheet` hook for better compatibility
 
-I will continue to develop Day Night Cycle for my own games so major bugs will be fixed, but edge cases will take longer to get to.
+### Breaking Changes from V12
+
+- Requires Foundry VTT V13 (minimum build 13)
+- Scene darkness values now stored in `environment.darknessLevel` path
+- SceneConfig customization uses ApplicationV2 lifecycle hooks
 
 ## Install 
 
-Available on the Forge and via the module directory within Foundry.
+Install via the manifest url: https://github.com/KonteiKeisei/day-night-cycle/releases/latest/download/module.json
 
-Alternatively install via the manifest url: https://github.com/SDoehren/day-night-cycle/releases/latest/download/module.json
+### Dependencies
 
-[Simple Calendar](https://github.com/vigoren/foundryvtt-simple-calendar) and [lib-wrapper](https://github.com/ruipin/fvtt-lib-wrapper) are the dependencies for this module.
+- [Simple Calendar](https://github.com/vigoren/foundryvtt-simple-calendar) - Required for time tracking
+- [lib-wrapper](https://github.com/ruipin/fvtt-lib-wrapper) - Required for module functionality
 
 ## Instructions
 
