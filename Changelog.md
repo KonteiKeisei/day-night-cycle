@@ -1,5 +1,27 @@
 # Change Log
 
+## Version 2.0.1 - Bug Fix
+
+**Fixed scene-level settings persistence issue**
+
+### Bug Fixes
+- **Scene Settings Persistence**: Fixed issue where the "Enable Day Night Cycle" (`dncactive`) and other scene-level settings were not persisting when saving the scene
+  - Updated form field names to use Foundry's standard `flags.*` naming convention (e.g., `flags.day-night-cycle.active`)
+  - Removed obsolete `closeDocumentSheet` hook that was manually saving flags
+  - Foundry now automatically handles flag persistence through proper field naming
+- **Affected Settings**: All scene-level Day Night Cycle settings now save correctly:
+  - Enable Day Night Cycle (active)
+  - Use Default Settings (default)
+  - Day Length Metric (sd)
+  - Lighting Step Size (stepsize)
+  - Moons effect lighting (moonon)
+  - Moon Brightness at Full Moon (moonstrength)
+  - Max Brightness for Scene (MaxLight)
+
+This fix resolves the issue where scenes that had Day Night Cycle deactivated prior to upgrade could not be reactivated.
+
+---
+
 ## Version 2.0.0 - V13 Compatibility (Fork)
 
 **Full Foundry VTT V13 compatibility update**

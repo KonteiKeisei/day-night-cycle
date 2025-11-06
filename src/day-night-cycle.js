@@ -45,10 +45,10 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
 
     let sceneDoc = sheet.document || sheet.object;
     if (!sceneDoc) return;
-    
+
     // Wrap html in jQuery if needed for V13 ApplicationV2 compatibility
     const $html = html instanceof jQuery ? html : $(html);
-    
+
     // Check if we've already added our fields to prevent duplicates
     // Check both the element itself and within it
     if ($html.hasClass('dnc-injected') || $html.find('.day-night-cycle-settings').length > 0) {
@@ -166,7 +166,7 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     <legend>Day Night Cycle</legend>
     <div class="form-group">
         <label class="checkbox">
-            <input type="checkbox" id="DNC.active" name="DNC.active" ` + activechecked + `>
+            <input type="checkbox" id="flags.day-night-cycle.active" name="flags.day-night-cycle.active" ` + activechecked + `>
             <span>Enable Day Night Cycle</span>
         </label>
         <p class="hint">Turns on the Day Night Cycle for this scene.</p>
@@ -174,7 +174,7 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
 
     <div class="form-group">
         <label class="checkbox">
-            <input type="checkbox" id="DNC.default" name="DNC.default" ` + defaultchecked + `>
+            <input type="checkbox" id="flags.day-night-cycle.default" name="flags.day-night-cycle.default" ` + defaultchecked + `>
             <span>Use Default Settings</span>
         </label>
         <p class="hint">If ticked the following Day Night Cycle settings will be ignored.</p>
@@ -183,7 +183,7 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     <div class="form-group">
         <label>Day Length Metric</label>
         <div class="form-fields">
-            <input type="number" name="DNC.sd" min="0.01" value="`+sd+`" step="0.01" data-dtype="Number">
+            <input type="number" name="flags.day-night-cycle.sd" min="0.01" value="`+sd+`" step="0.01" data-dtype="Number">
         </div>
         <p class="hint">Smaller numbers give longer nights.</p>
     </div>
@@ -191,14 +191,14 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     <div class="form-group">
         <label>Lighting Step Size</label>
         <div class="form-fields">
-            <input type="number" name="DNC.stepsize" min="0.001" value="`+stepsize+`" step="0.001" data-dtype="Number">
+            <input type="number" name="flags.day-night-cycle.stepsize" min="0.001" value="`+stepsize+`" step="0.001" data-dtype="Number">
         </div>
         <p class="hint">Size of jumps when adjusting light levels - High number bigger jumps but less often.</p>
     </div>
 
     <div class="form-group">
         <label class="checkbox">
-            <input type="checkbox" id="DNC.moononflag" name="DNC.moononflag" ` + moononchecked + `>
+            <input type="checkbox" id="flags.day-night-cycle.moonon" name="flags.day-night-cycle.moonon" ` + moononchecked + `>
             <span>Moons effect lighting</span>
         </label>
         <p class="hint">Turns on moon effects for this scene.</p>
@@ -207,7 +207,7 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     <div class="form-group">
         <label>Moon Brightness at Full Moon</label>
         <div class="form-fields">
-            <input type="number" name="DNC.moonstrength" min="0.01" max="1.00" value="`+moonstrength+`" step="0.01" data-dtype="Number">
+            <input type="number" name="flags.day-night-cycle.moonstrength" min="0.01" max="1.00" value="`+moonstrength+`" step="0.01" data-dtype="Number">
         </div>
         <p class="hint">The strength of light from each moon on a full moon at midnight.</p>
     </div>
@@ -215,7 +215,7 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     <div class="form-group">
         <label>Max Brightness for Scene</label>
         <div class="form-fields">
-            <input type="number" name="DNC.MaxLight" min="0.01" max="1.00" value="`+MaxLight+`" step="0.01" data-dtype="Number">
+            <input type="number" name="flags.day-night-cycle.MaxLight" min="0.01" max="1.00" value="`+MaxLight+`" step="0.01" data-dtype="Number">
         </div>
         <p class="hint">For worlds that do not reach full light.</p>
     </div>
@@ -226,54 +226,6 @@ Hooks.on("renderSceneConfig", (sheet, html, data) => {
     }
 
 })
-
-
-Hooks.on("closeDocumentSheet", (sheet, html) => {
-    const configscene = sheet.document || sheet.object;
-    if (!(configscene instanceof Scene)) return;
-    
-    // Wrap html in jQuery if needed for V13 ApplicationV2 compatibility
-    const $html = html instanceof jQuery ? html : $(html);
-    const form = $html.find("form")[0];
-    if (!form) return;
-
-    const moonon = $(form)
-        .find('input[name="DNC.moononflag"]')
-        .prop("checked");
-    if (moonon !== undefined) configscene.setFlag("day-night-cycle", "moonon", moonon);
-
-    const active = $(form)
-        .find('input[name="DNC.active"]')
-        .prop("checked");
-    if (active !== undefined) configscene.setFlag("day-night-cycle", "active", active);
-
-    const defaultval = $(form)
-        .find('input[name="DNC.default"]')
-        .prop("checked");
-    if (defaultval !== undefined) configscene.setFlag("day-night-cycle", "default", defaultval);
-
-    const sd = $(form)
-        .find('input[name="DNC.sd"]')
-        .val();
-    if (sd) configscene.setFlag("day-night-cycle", "sd", sd);
-
-    const stepsize = $(form)
-        .find('input[name="DNC.stepsize"]')
-        .val();
-    if (stepsize) configscene.setFlag("day-night-cycle", "stepsize", stepsize);
-
-    const moonstrength = $(form)
-        .find('input[name="DNC.moonstrength"]')
-        .val();
-    if (moonstrength) configscene.setFlag("day-night-cycle", "moonstrength", moonstrength);
-
-    const MaxLight = $(form)
-        .find('input[name="DNC.MaxLight"]')
-        .val();
-    if (MaxLight) configscene.setFlag("day-night-cycle", "MaxLight", MaxLight);
-
-    DEBUG(active, defaultval, sd, stepsize);
-});
 
 
 Hooks.once("canvasReady",async (canvas)=>{
